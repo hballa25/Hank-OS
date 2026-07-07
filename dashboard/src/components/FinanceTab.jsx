@@ -34,10 +34,20 @@ export default function FinanceTab() {
   }, [])
 
   if (!plans) return <div className="tab-pad">Loading…</div>
+
+  const chart = (
+    <iframe
+      title="MES live chart"
+      className="tv-chart"
+      src="https://s.tradingview.com/widgetembed/?symbol=CME_MINI%3AMES1%21&interval=5&theme=dark&style=1&timezone=America%2FNew_York&hide_side_toolbar=0&withdateranges=1"
+    />
+  )
+
   if (plans.length === 0)
     return (
       <div className="tab-pad">
         <h2>💹 Finance</h2>
+        {chart}
         <p>
           No trading plans yet. The Trader writes the first one on the next market weekday at 8:32 AM —
           it lands in <code>50 Finance/Daily Plans/</code> and renders here.
@@ -54,6 +64,7 @@ export default function FinanceTab() {
   return (
     <div className="tab-pad finance">
       <h2>💹 {latest.name}</h2>
+      {chart}
       <div className="finance-grid">
         <div className="md-preview" dangerouslySetInnerHTML={{ __html: marked.parse(latest.content) }} />
         {levels.length > 0 && (

@@ -1,13 +1,17 @@
 import React, { useEffect, useMemo, useState, useCallback } from 'react'
 import Graph3D from './components/Graph3D.jsx'
 import VoiceButton from './components/VoiceButton.jsx'
+import ConnectionsTab from './components/ConnectionsTab.jsx'
+import ClaudeTab from './components/ClaudeTab.jsx'
+import BrowserTab from './components/BrowserTab.jsx'
+import { saveNote } from './api.js'
 import NotePanel from './components/NotePanel.jsx'
 import FinanceTab from './components/FinanceTab.jsx'
 import HealthTab from './components/HealthTab.jsx'
 import { fetchGraph } from './api.js'
 import { DOMAIN_COLORS, DOMAIN_LABELS, colorFor } from './constants.js'
 
-const TABS = ['Galaxy', 'Finance', 'Health']
+const TABS = ['Galaxy', 'Finance', 'Health', 'Connections', 'Claude', 'Browser']
 
 export default function App() {
   const [graph, setGraph] = useState(null)
@@ -89,6 +93,20 @@ export default function App() {
           />
           {query && highlightIds.size > 0 && <span className="hits">{highlightIds.size}</span>}
         </form>
+        <button
+          className="mic"
+          title="New note — created in the Inbox; the Gardener files it, or move it yourself"
+          onClick={async () => {
+            const title = window.prompt('New note title:')
+            if (!title) return
+            const p = `00 Inbox/${title.replace(/[<>:"/\\|?*#]/g, '')}.md`
+            await saveNote(p, `# ${title}\n\n`)
+            await load()
+            setOpenNote(p)
+          }}
+        >
+          ✚
+        </button>
         <VoiceButton
           onTab={setTab}
           onFind={(q) => {
@@ -143,8 +161,14 @@ export default function App() {
           />
         ) : tab === 'Finance' ? (
           <FinanceTab />
-        ) : (
+        ) : tab === 'Health' ? (
           <HealthTab />
+        ) : tab === 'Connections' ? (
+          <ConnectionsTab onGraphChanged={load} />
+        ) : tab === 'Claude' ? (
+          <ClaudeTab />
+        ) : (
+          <BrowserTab />
         )}
         {gaps && tab === 'Galaxy' && (
           <div className="gaps-panel">

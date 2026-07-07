@@ -78,6 +78,53 @@ app.get('/api/notes-by-type', (req, res) => {
   res.json(listByType(VAULT, req.query.type))
 })
 
+// Connections tab: read + add sources without touching JSON by hand
+app.get('/api/sources', (req, res) => {
+  res.json(loadSources().map((s) => ({ ...s, exists: fs.existsSync(s.path) })))
+})
+
+app.post('/api/sources', (req, res) => {
+  try {
+    const { name, path: srcPath, maxFiles = 150, depth = 2 } = req.body
+    if (!name || !srcPath) throw new Error('name and path required')
+    if (!fs.existsSync(srcPath)) throw new Error(`path not found: ${srcPath}`)
+    const sources = loadSources()
+    if (sources.some((s) => s.name === name)) throw new Error(`source "${name}" already exists`)
+    sources.push({ name, path: srcPath, maxFiles: Number(maxFiles), depth: Number(depth) })
+    fs.writeFileSync(path.resolve(__dirname, '..', 'sources.json'), JSON.stringify(sources, null, 2))
+    res.json({ ok: true, sources })
+  } catch (e) {
+    res.status(400).json({ error: String(e.message || e) })
+  }
+})
+
+// Claude tab: list context packs + launch Claude Code on this PC
+app.get('/api/context-packs', (req, res) => {
+  const dir = path.join(VAULT, '90 System', 'context-packs')
+  if (!fs.existsSync(dir)) return res.json([])
+  res.json(
+    fs.readdirSync(dir).filter((f) => f.endsWith('.md'))
+      .map((f) => ({ name: f.replace(/\.md$/, ''), path: `90 System/context-packs/${f}`, mtime: fs.statSync(path.join(dir, f)).mtimeMs }))
+      .sort((a, b) => b.mtime - a.mtime)
+  )
+})
+
+app.post('/api/launch-claude', async (req, res) => {
+  try {
+    const { spawn } = await import('child_process')
+    const root = path.resolve(VAULT, '..')
+    const prompt = req.body.pack
+      ? `Read the context pack at 'vault/${req.body.pack}' and help me build from it.`
+      : req.body.prompt || ''
+    const args = ['/c', 'start', 'Claude Code', 'cmd', '/k', 'claude']
+    if (prompt) args.push(prompt)
+    spawn('cmd', args, { cwd: root, detached: true, stdio: 'ignore' }).unref()
+    res.json({ ok: true, launched: prompt || '(blank session)' })
+  } catch (e) {
+    res.status(400).json({ error: String(e.message || e) })
+  }
+})
+
 // Voice (or any) capture → timestamped Inbox note; the Gardener files it overnight
 app.post('/api/capture', (req, res) => {
   try {

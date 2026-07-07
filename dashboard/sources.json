@@ -1,8 +1,6 @@
 [
-  {
-    "name": "Downloads",
-    "path": "C:\\Users\\hball\\Downloads",
-    "maxFiles": 40,
-    "depth": 2
-  }
+  { "name": "Drive-Personal", "path": "G:\\My Drive", "maxFiles": 120, "depth": 2 },
+  { "name": "Drive-Science", "path": "H:\\My Drive", "maxFiles": 120, "depth": 2 },
+  { "name": "Drive-Classroom", "path": "I:\\My Drive", "maxFiles": 120, "depth": 2 },
+  { "name": "Downloads", "path": "C:\\Users\\hball\\Downloads", "maxFiles": 40, "depth": 2 }
 ]
