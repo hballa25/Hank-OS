@@ -1,6 +1,6 @@
 import React, { useMemo, useRef, useCallback, useEffect, useState } from 'react'
 import ForceGraph3D from 'react-force-graph-3d'
-import { DOMAIN_COLORS, HIGHLIGHT } from '../constants.js'
+import { HIGHLIGHT, colorFor } from '../constants.js'
 
 export default function Graph3D({ graph, activeDomains, highlightIds, onNodeClick, flyToId }) {
   const fgRef = useRef()
@@ -36,7 +36,7 @@ export default function Graph3D({ graph, activeDomains, highlightIds, onNodeClic
   }, [graph, activeDomains])
 
   const nodeColor = useCallback(
-    (n) => (highlightIds.has(n.id) ? HIGHLIGHT : DOMAIN_COLORS[n.domain] || '#888'),
+    (n) => (highlightIds.has(n.id) ? HIGHLIGHT : colorFor(n.domain)),
     [highlightIds]
   )
 

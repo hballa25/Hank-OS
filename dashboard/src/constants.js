@@ -21,3 +21,11 @@ export const DOMAIN_LABELS = {
 }
 
 export const HIGHLIGHT = '#fde047'
+
+// external sources get a stable auto-color from their name
+export function colorFor(domain) {
+  if (DOMAIN_COLORS[domain]) return DOMAIN_COLORS[domain]
+  let h = 0
+  for (const c of domain) h = (h * 31 + c.charCodeAt(0)) % 360
+  return `hsl(${h}, 75%, 62%)`
+}

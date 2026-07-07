@@ -58,6 +58,7 @@ export default function NotePanel({ path, graph, onClose, onOpenByName, onSaved 
           <span className="note-path">{path}</span>
         </div>
         <div className="note-actions">
+          {!path.startsWith('src:') && (
           <button
             title="Assemble a context pack (this note + all connections) and get a Claude Code command"
             onClick={async () => {
@@ -76,12 +77,17 @@ export default function NotePanel({ path, graph, onClose, onOpenByName, onSaved 
           >
             🚀 Deploy
           </button>
-          <button onClick={() => setMode(mode === 'edit' ? 'preview' : 'edit')}>
-            {mode === 'edit' ? 'Preview' : 'Edit'}
-          </button>
-          <button onClick={save} disabled={!dirty} className={dirty ? 'primary' : ''}>
-            Save
-          </button>
+          )}
+          {!path.startsWith('src:') && (
+            <>
+              <button onClick={() => setMode(mode === 'edit' ? 'preview' : 'edit')}>
+                {mode === 'edit' ? 'Preview' : 'Edit'}
+              </button>
+              <button onClick={save} disabled={!dirty} className={dirty ? 'primary' : ''}>
+                Save
+              </button>
+            </>
+          )}
           <button onClick={onClose}>✕</button>
         </div>
       </div>

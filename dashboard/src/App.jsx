@@ -5,7 +5,7 @@ import NotePanel from './components/NotePanel.jsx'
 import FinanceTab from './components/FinanceTab.jsx'
 import HealthTab from './components/HealthTab.jsx'
 import { fetchGraph } from './api.js'
-import { DOMAIN_COLORS, DOMAIN_LABELS } from './constants.js'
+import { DOMAIN_COLORS, DOMAIN_LABELS, colorFor } from './constants.js'
 
 const TABS = ['Galaxy', 'Finance', 'Health']
 
@@ -22,6 +22,18 @@ export default function App() {
   useEffect(() => {
     load()
   }, [load])
+
+  // domains are dynamic: vault folders + whatever sources.json connects
+  const domains = useMemo(() => {
+    if (!graph) return Object.keys(DOMAIN_COLORS)
+    const known = Object.keys(DOMAIN_COLORS)
+    const all = [...new Set(graph.nodes.map((n) => n.domain))]
+    return [...known.filter((d) => all.includes(d)), ...all.filter((d) => !known.includes(d)).sort()]
+  }, [graph])
+
+  useEffect(() => {
+    if (graph) setActiveDomains(new Set(domains))
+  }, [graph, domains])
 
   const highlightIds = useMemo(() => {
     if (!graph || !query.trim()) return new Set()
@@ -103,15 +115,15 @@ export default function App() {
         )}
         {tab === 'Galaxy' && (
           <div className="domain-toggles">
-            {Object.keys(DOMAIN_COLORS).map((d) => (
+            {domains.map((d) => (
               <button
                 key={d}
                 className={activeDomains.has(d) ? 'domain on' : 'domain'}
-                style={{ '--c': DOMAIN_COLORS[d] }}
+                style={{ '--c': colorFor(d) }}
                 onClick={() => toggleDomain(d)}
-                title={`Toggle ${DOMAIN_LABELS[d]}`}
+                title={`Toggle ${DOMAIN_LABELS[d] || d}`}
               >
-                {DOMAIN_LABELS[d]}
+                {DOMAIN_LABELS[d] || d}
               </button>
             ))}
           </div>

@@ -11,6 +11,27 @@ const PORT = 5175
 const app = express()
 app.use(express.json({ limit: '5mb' }))
 
+// external sources registry — edit dashboard/sources.json to connect any local folder
+// (incl. Google Drive for Desktop mounts: one entry per Google account)
+function loadSources() {
+  try {
+    return JSON.parse(fs.readFileSync(path.resolve(__dirname, '..', 'sources.json'), 'utf-8'))
+  } catch {
+    return []
+  }
+}
+
+function sourceFilePath(p) {
+  // p looks like "src:<name>/<relpath>"
+  const m = p.match(/^src:([^/]+)\/(.+)$/)
+  if (!m) return null
+  const src = loadSources().find((s) => s.name === m[1])
+  if (!src) return null
+  const full = path.resolve(src.path, m[2])
+  if (!full.startsWith(path.resolve(src.path))) throw new Error('path escapes source')
+  return full
+}
+
 // resolve a client-supplied relative path safely inside the vault
 function vaultPath(rel) {
   const full = path.resolve(VAULT, rel)
@@ -19,13 +40,22 @@ function vaultPath(rel) {
 }
 
 app.get('/api/graph', (req, res) => {
-  res.json(buildGraph(VAULT))
+  res.json(buildGraph(VAULT, loadSources()))
 })
 
 app.get('/api/note', (req, res) => {
   try {
-    const full = vaultPath(req.query.p)
-    res.json({ path: req.query.p, content: fs.readFileSync(full, 'utf-8') })
+    const p = req.query.p
+    if (p.startsWith('src:')) {
+      const full = sourceFilePath(p)
+      if (!full) throw new Error('unknown source')
+      const content = full.endsWith('.md')
+        ? fs.readFileSync(full, 'utf-8')
+        : `*(external file — read-only in Hank OS)*\n\n**Local path:** \`${full}\`\n\nOpen it with its native app, or link it from a vault note with a normal markdown link.`
+      return res.json({ path: p, content, readOnly: true })
+    }
+    const full = vaultPath(p)
+    res.json({ path: p, content: fs.readFileSync(full, 'utf-8') })
   } catch (e) {
     res.status(404).json({ error: String(e.message || e) })
   }
@@ -33,6 +63,7 @@ app.get('/api/note', (req, res) => {
 
 app.put('/api/note', (req, res) => {
   try {
+    if (String(req.body.path).startsWith('src:')) throw new Error('external sources are read-only')
     const full = vaultPath(req.body.path)
     if (!full.endsWith('.md')) throw new Error('only .md files')
     fs.mkdirSync(path.dirname(full), { recursive: true })
