@@ -28,4 +28,6 @@ Tailscale is a free encrypted tunnel between your own devices. No router setup, 
 - **Phone can:** create + edit notes (Notes tab / ✚ / 🎤 voice), view the galaxy, ask your brain, see Finance & Health. Voice capture works in Chrome on Android.
 - If "Blocked request" ever appears over Tailscale, it's a hostname allowlist thing — use the numeric **100.x.x.x** address instead of the `.ts.net` name (already handled, but the IP always works).
 
-Related: [[connections]] · the Connect-your-phone panel lives in the dashboard's Connections tab.
+To upgrade from a home-screen bookmark to a **true installable app** (fullscreen, offline, real icon): [[pwa-go-live]].
+
+Related: [[connections]] · [[pwa-go-live]] · the Connect-your-phone panel lives in the dashboard's Connections tab.
