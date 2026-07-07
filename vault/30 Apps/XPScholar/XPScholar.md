@@ -1,6 +1,6 @@
 ---
 type: app
-repo: 
+repo: https://github.com/hballa25/XPScholar
 status: active
 ---
 
@@ -9,7 +9,7 @@ status: active
 Hub note for the XPScholar web app. Issues, decisions, and roadmap notes link here.
 
 ## Links
-- Repo: *(add GitHub URL — wired to GitHub MCP in Phase 3)*
+- Repo: https://github.com/hballa25/XPScholar
 
 ## Open threads
 - 

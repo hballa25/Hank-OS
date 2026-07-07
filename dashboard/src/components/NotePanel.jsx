@@ -58,6 +58,24 @@ export default function NotePanel({ path, graph, onClose, onOpenByName, onSaved 
           <span className="note-path">{path}</span>
         </div>
         <div className="note-actions">
+          <button
+            title="Assemble a context pack (this note + all connections) and get a Claude Code command"
+            onClick={async () => {
+              const r = await (
+                await fetch('/api/context-pack', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ path }),
+                })
+              ).json()
+              if (r.ok) {
+                try { await navigator.clipboard.writeText(r.command) } catch { /* clipboard blocked */ }
+                setStatus(`context pack ready (${r.neighbors} connections) — command copied: ${r.command}`)
+              } else setStatus(`error: ${r.error}`)
+            }}
+          >
+            🚀 Deploy
+          </button>
           <button onClick={() => setMode(mode === 'edit' ? 'preview' : 'edit')}>
             {mode === 'edit' ? 'Preview' : 'Edit'}
           </button>

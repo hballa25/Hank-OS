@@ -15,6 +15,7 @@ export default function App() {
   const [query, setQuery] = useState('')
   const [openNote, setOpenNote] = useState(null)
   const [flyToId, setFlyToId] = useState(null)
+  const [gaps, setGaps] = useState(null)
 
   const load = useCallback(() => fetchGraph().then(setGraph), [])
   useEffect(() => {
@@ -76,6 +77,18 @@ export default function App() {
           {query && highlightIds.size > 0 && <span className="hits">{highlightIds.size}</span>}
         </form>
         {tab === 'Galaxy' && (
+          <button
+            className={gaps ? 'tab active' : 'tab'}
+            title="Find missing bridges between domains"
+            onClick={async () => {
+              if (gaps) return setGaps(null)
+              setGaps(await (await fetch('/api/gaps')).json())
+            }}
+          >
+            🔭 Gaps
+          </button>
+        )}
+        {tab === 'Galaxy' && (
           <div className="domain-toggles">
             {Object.keys(DOMAIN_COLORS).map((d) => (
               <button
@@ -107,6 +120,31 @@ export default function App() {
           <FinanceTab />
         ) : (
           <HealthTab />
+        )}
+        {gaps && tab === 'Galaxy' && (
+          <div className="gaps-panel">
+            <h3>🔭 Structural gaps</h3>
+            {gaps.gaps.length === 0 ? (
+              <p className="muted">Every domain pair has at least one bridge. Rare air.</p>
+            ) : (
+              <>
+                <p className="muted">Domain pairs with zero connections — each one is a bridge (or a product) waiting to exist:</p>
+                {gaps.gaps.map((g, i) => (
+                  <div key={i} className="gap-row">{DOMAIN_LABELS[g.a] || g.a} ✕ {DOMAIN_LABELS[g.b] || g.b}</div>
+                ))}
+              </>
+            )}
+            {gaps.insular.length > 0 && (
+              <>
+                <p className="muted">Well-connected notes that never leave their own domain:</p>
+                {gaps.insular.map((n, i) => (
+                  <button key={i} className="conn" onClick={() => { setOpenNote(n.id); setGaps(null) }}>
+                    {n.name} ({DOMAIN_LABELS[n.domain] || n.domain})
+                  </button>
+                ))}
+              </>
+            )}
+          </div>
         )}
         {openNote && graph && (
           <NotePanel
