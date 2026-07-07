@@ -20,3 +20,5 @@ Teacher (educator workflows are first-class) who also builds: **TaiGrader** and 
 5. Finance content is research and decision support only — never execute or recommend executing trades automatically.
 6. Log agent runs to `vault/90 System/agent-logs/` (one line per action taken).
 7. Keep everything Obsidian-compatible: standard Markdown, YAML frontmatter, no proprietary syntax.
+8. **Check the index first, open files second.** `vault/90 System/index.md` is a one-line-per-note catalogue of the whole vault (maintained nightly by the Gardener). Route retrieval through it before grepping or opening files.
+9. **API keys are never pasted into chats, prompts, or anything browser-reachable.** They go into local config files by hand, and those files stay gitignored.
