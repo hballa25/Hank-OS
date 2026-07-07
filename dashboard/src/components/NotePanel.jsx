@@ -20,11 +20,19 @@ export default function NotePanel({ path, graph, onClose, onOpenByName, onSaved 
   const [dirty, setDirty] = useState(false)
   const [status, setStatus] = useState('')
 
+  const [relatedNotes, setRelatedNotes] = useState([])
+
   useEffect(() => {
     setStatus('')
     setDirty(false)
     setMode('preview')
+    setRelatedNotes([])
     fetchNote(path).then((r) => setContent(r.content ?? `*(error: ${r.error})*`))
+    if (!path.startsWith('src:'))
+      fetch(`/api/related?p=${encodeURIComponent(path)}`)
+        .then((r) => r.json())
+        .then((r) => setRelatedNotes(r.related || []))
+        .catch(() => {})
   }, [path])
 
   const connections = useMemo(() => {
@@ -115,6 +123,16 @@ export default function NotePanel({ path, graph, onClose, onOpenByName, onSaved 
           />
         )}
       </div>
+      {relatedNotes.length > 0 && (
+        <div className="note-connections">
+          <h3>Related (by meaning)</h3>
+          {relatedNotes.map((r, i) => (
+            <button key={i} className="conn" onClick={() => onOpenByName(r.name)} title={`similarity ${r.score}`}>
+              ≈ {r.name}
+            </button>
+          ))}
+        </div>
+      )}
       {connections.length > 0 && (
         <div className="note-connections">
           <h3>Connections</h3>

@@ -3,6 +3,7 @@ import fs from 'fs'
 import path from 'path'
 import { fileURLToPath } from 'url'
 import { buildGraph, listByType } from './vaultParser.js'
+import { buildIndex, search, related, isReady } from './semantic.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const VAULT = path.resolve(__dirname, '..', '..', 'vault')
@@ -76,6 +77,39 @@ app.put('/api/note', (req, res) => {
 
 app.get('/api/notes-by-type', (req, res) => {
   res.json(listByType(VAULT, req.query.type))
+})
+
+// Semantic layer: passive related-notes + ask-your-brain (answers via Claude Code, no API key)
+app.get('/api/related', (req, res) => {
+  res.json({ ready: isReady(), related: isReady() ? related(req.query.p) : [] })
+})
+
+app.post('/api/ask', async (req, res) => {
+  try {
+    const question = (req.body.question || '').trim()
+    if (!question) throw new Error('empty question')
+    const hits = await search(question, 6)
+    const context = hits.map((h) => `--- From "${h.path}" ---\n${h.text}`).join('\n\n')
+    const prompt = `You are Hank OS, Henry's second brain, answering from his own notes. Answer the question using ONLY the note excerpts below. Be direct and brief (2-5 sentences), speak like a sharp teammate, and name which note(s) the answer came from. If the notes don't contain the answer, say so plainly.\n\n${context}\n\n--- Question ---\n${question}`
+    const { spawn } = await import('child_process')
+    // prompt goes via stdin — as an argv it gets mangled by cmd quoting on Windows
+    const answer = await new Promise((resolve, reject) => {
+      const child = spawn('claude', ['-p'], { cwd: path.resolve(VAULT, '..'), shell: true, timeout: 120000 })
+      let out = '', err = ''
+      child.stdout.on('data', (d) => (out += d))
+      child.stderr.on('data', (d) => (err += d))
+      child.on('close', (code) => (code === 0 ? resolve(out.trim()) : reject(new Error(err || `claude exited ${code}`))))
+      child.on('error', reject)
+      child.stdin.write(prompt)
+      child.stdin.end()
+    })
+    const seen = new Set()
+    const sources = hits.filter((h) => !seen.has(h.path) && seen.add(h.path))
+      .map((h) => ({ path: h.path, name: h.name, score: Math.round(h.score * 100) / 100 }))
+    res.json({ answer, sources })
+  } catch (e) {
+    res.status(400).json({ error: String(e.message || e) })
+  }
 })
 
 // Connections tab: read + add sources without touching JSON by hand
@@ -213,3 +247,8 @@ if (fs.existsSync(dist)) {
 }
 
 app.listen(PORT, () => console.log(`Hank OS vault API on http://localhost:${PORT} (vault: ${VAULT})`))
+
+// build the semantic index in the background (first run downloads the 25MB model)
+buildIndex(VAULT)
+  .then((n) => console.log(`semantic index ready: ${n} chunks`))
+  .catch((e) => console.error('semantic index failed:', e.message))

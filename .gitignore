@@ -8,3 +8,6 @@ dist/
 Thumbs.db
 Desktop.ini
 .DS_Store
+
+# semantic index cache
+dashboard/.semantic-cache.json

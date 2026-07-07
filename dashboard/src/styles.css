@@ -148,3 +148,15 @@ main { flex: 1; position: relative; overflow: hidden; }
 .browser-bar { display: flex; gap: 8px; align-items: center; padding: 10px 14px; border-bottom: 1px solid #1e2340; flex-wrap: wrap; }
 .browser-bar input { flex: 1; min-width: 160px; padding: 7px 12px; border-radius: 8px; border: 1px solid #262b4a; background: #0b0e22; color: #e5e7eb; }
 .browser-frame { flex: 1; border: 0; background: #fff; }
+
+/* ask panel */
+.ask-panel {
+  position: absolute; bottom: 18px; left: 50%; transform: translateX(-50%); z-index: 30;
+  width: min(640px, 94vw); max-height: 55%; overflow-y: auto;
+  background: rgba(8, 10, 24, 0.98); border: 1px solid #22d3ee66; border-radius: 14px;
+  padding: 16px 20px; box-shadow: 0 8px 40px #000a;
+}
+.ask-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 8px; }
+.ask-head h3 { font-size: 15px; color: #22d3ee; }
+.ask-sources { margin-top: 12px; padding-top: 10px; border-top: 1px solid #1e2340; }
+.ask-error { color: #f87171; font-size: 13.5px; }

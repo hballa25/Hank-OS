@@ -3,7 +3,7 @@ import React, { useRef, useState } from 'react'
 // Tier-1 voice: Chrome's built-in speech recognition — no API key, no cost.
 // Plain speech becomes an Inbox capture (the Gardener files it overnight).
 // "find <x>" / "show me <x>" flies the galaxy; "go to finance|health|galaxy" switches tabs.
-export default function VoiceButton({ onFind, onTab }) {
+export default function VoiceButton({ onFind, onTab, onAsk }) {
   const [listening, setListening] = useState(false)
   const [toast, setToast] = useState('')
   const recRef = useRef(null)
@@ -35,14 +35,18 @@ export default function VoiceButton({ onFind, onTab }) {
       const text = finalText.trim()
       if (!text) return setToast('')
       const lower = text.toLowerCase()
-      const tabM = lower.match(/^(?:go to|switch to|show)\s+(galaxy|finance|health)\b/)
+      const tabM = lower.match(/^(?:go to|switch to|show)\s+(galaxy|finance|health|connections|claude|browser)\b/)
       const findM = lower.match(/^(?:find|show me|open|search for|search)\s+(.+)/)
+      const askM = lower.match(/^(what|when|where|who|how|why|which|do i|did i|am i|is |are |should i|can i)/)
       if (tabM) {
         onTab(tabM[1][0].toUpperCase() + tabM[1].slice(1))
         setToast(`→ ${tabM[1]}`)
       } else if (findM) {
         onFind(findM[1].replace(/[.?!]+$/, ''))
         setToast(`🔍 ${findM[1]}`)
+      } else if (askM && onAsk) {
+        onAsk(text)
+        setToast(`🧠 asking your brain…`)
       } else {
         const r = await (
           await fetch('/api/capture', {

@@ -4,6 +4,7 @@ import VoiceButton from './components/VoiceButton.jsx'
 import ConnectionsTab from './components/ConnectionsTab.jsx'
 import ClaudeTab from './components/ClaudeTab.jsx'
 import BrowserTab from './components/BrowserTab.jsx'
+import AskPanel from './components/AskPanel.jsx'
 import { saveNote } from './api.js'
 import NotePanel from './components/NotePanel.jsx'
 import FinanceTab from './components/FinanceTab.jsx'
@@ -21,6 +22,29 @@ export default function App() {
   const [openNote, setOpenNote] = useState(null)
   const [flyToId, setFlyToId] = useState(null)
   const [gaps, setGaps] = useState(null)
+  const [ask, setAsk] = useState(null)
+
+  const askBrain = async (question, speak = false) => {
+    setAsk({ question, loading: true })
+    try {
+      const r = await (
+        await fetch('/api/ask', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ question }),
+        })
+      ).json()
+      if (r.error) return setAsk({ question, error: r.error })
+      setAsk({ question, answer: r.answer, sources: r.sources })
+      if (speak && 'speechSynthesis' in window) {
+        const u = new SpeechSynthesisUtterance(r.answer.replace(/[*_#`\[\]]/g, '').slice(0, 600))
+        u.rate = 1.05
+        speechSynthesis.speak(u)
+      }
+    } catch (e) {
+      setAsk({ question, error: String(e) })
+    }
+  }
 
   const load = useCallback(() => fetchGraph().then(setGraph), [])
   useEffect(() => {
@@ -47,6 +71,7 @@ export default function App() {
 
   const onCommand = (e) => {
     e.preventDefault()
+    if (query.trim().endsWith('?')) return askBrain(query.trim()) // "?" = ask the brain
     if (!graph) return
     const first = graph.nodes.find((n) => highlightIds.has(n.id))
     if (first) {
@@ -109,6 +134,7 @@ export default function App() {
         </button>
         <VoiceButton
           onTab={setTab}
+          onAsk={(q) => askBrain(q, true)}
           onFind={(q) => {
             setTab('Galaxy')
             setQuery(q)
@@ -194,6 +220,9 @@ export default function App() {
               </>
             )}
           </div>
+        )}
+        {ask && (
+          <AskPanel ask={ask} onClose={() => setAsk(null)} onOpenNote={(p) => { setOpenNote(p); setAsk(null) }} />
         )}
         {openNote && graph && (
           <NotePanel
