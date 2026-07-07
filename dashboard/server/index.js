@@ -47,6 +47,25 @@ app.get('/api/notes-by-type', (req, res) => {
   res.json(listByType(VAULT, req.query.type))
 })
 
+// Voice (or any) capture → timestamped Inbox note; the Gardener files it overnight
+app.post('/api/capture', (req, res) => {
+  try {
+    const text = (req.body.text || '').trim()
+    if (!text) throw new Error('empty capture')
+    const d = new Date()
+    const stamp = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}${String(d.getMinutes()).padStart(2, '0')}`
+    const title = text.split(/\s+/).slice(0, 6).join(' ').replace(/[<>:"/\\|?*#]/g, '')
+    const rel = `00 Inbox/${stamp} ${title}.md`
+    const body = `---\ncaptured: ${d.toISOString()}\nsource: ${req.body.source || 'voice'}\n---\n\n${text}\n`
+    const full = vaultPath(rel)
+    fs.mkdirSync(path.dirname(full), { recursive: true })
+    fs.writeFileSync(full, body, 'utf-8')
+    res.json({ ok: true, path: rel })
+  } catch (e) {
+    res.status(400).json({ error: String(e.message || e) })
+  }
+})
+
 // Assemble a context pack for a note: the note + everything within 1 hop,
 // written to 90 System/context-packs/ so a Claude Code session can start with full context.
 app.post('/api/context-pack', (req, res) => {

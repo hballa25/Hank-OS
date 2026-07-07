@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState, useCallback } from 'react'
 import Graph3D from './components/Graph3D.jsx'
+import VoiceButton from './components/VoiceButton.jsx'
 import NotePanel from './components/NotePanel.jsx'
 import FinanceTab from './components/FinanceTab.jsx'
 import HealthTab from './components/HealthTab.jsx'
@@ -76,6 +77,18 @@ export default function App() {
           />
           {query && highlightIds.size > 0 && <span className="hits">{highlightIds.size}</span>}
         </form>
+        <VoiceButton
+          onTab={setTab}
+          onFind={(q) => {
+            setTab('Galaxy')
+            setQuery(q)
+            const first = graph?.nodes.find((n) => n.name.toLowerCase().includes(q.toLowerCase()))
+            if (first) {
+              setFlyToId(null)
+              requestAnimationFrame(() => setFlyToId(first.id))
+            }
+          }}
+        />
         {tab === 'Galaxy' && (
           <button
             className={gaps ? 'tab active' : 'tab'}
