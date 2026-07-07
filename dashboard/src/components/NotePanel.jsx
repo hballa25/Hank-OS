@@ -66,6 +66,25 @@ export default function NotePanel({ path, graph, onClose, onOpenByName, onSaved 
           <span className="note-path">{path}</span>
         </div>
         <div className="note-actions">
+          {path.startsWith('src:') && (
+            <button
+              title="Convert this file to a .md note in the vault (70 Imports) so it can be sorted, linked, and connected"
+              onClick={async () => {
+                setStatus('converting…')
+                const r = await (
+                  await fetch('/api/convert', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id: path }),
+                  })
+                ).json()
+                setStatus(r.ok ? `✓ now a vault note: ${r.path}` : `✗ ${r.error}`)
+                if (r.ok) onSaved?.()
+              }}
+            >
+              📥 Convert to .md
+            </button>
+          )}
           {!path.startsWith('src:') && (
           <button
             title="Assemble a context pack (this note + all connections) and get a Claude Code command"

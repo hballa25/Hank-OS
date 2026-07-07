@@ -79,6 +79,88 @@ app.get('/api/notes-by-type', (req, res) => {
   res.json(listByType(VAULT, req.query.type))
 })
 
+// Notes tab: full vault tree
+app.get('/api/tree', (req, res) => {
+  const out = []
+  const walk = (dir, rel) => {
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      if (entry.name.startsWith('.')) continue
+      const r = rel ? `${rel}/${entry.name}` : entry.name
+      if (entry.isDirectory()) {
+        out.push({ path: r, dir: true })
+        walk(path.join(dir, entry.name), r)
+      } else if (entry.name.endsWith('.md')) out.push({ path: r, dir: false })
+    }
+  }
+  walk(VAULT, '')
+  res.json(out)
+})
+
+// Convert engine: external source files → vault .md notes (sortable, linkable, graph citizens)
+async function convertFile(full, srcName) {
+  const ext = path.extname(full).toLowerCase()
+  const base = path.basename(full, ext)
+  let md = null
+  if (ext === '.md' || ext === '.txt') {
+    md = fs.readFileSync(full, 'utf-8')
+  } else if (ext === '.docx') {
+    const mammoth = (await import('mammoth')).default
+    const TurndownService = (await import('turndown')).default
+    const { value: html } = await mammoth.convertToHtml({ path: full })
+    md = new TurndownService({ headingStyle: 'atx' }).turndown(html)
+  } else if (ext === '.pdf') {
+    const { PDFParse } = await import('pdf-parse')
+    const parser = new PDFParse({ data: new Uint8Array(fs.readFileSync(full)) })
+    const result = await parser.getText()
+    await parser.destroy?.()
+    md = result.text.replace(/\n{3,}/g, '\n\n').trim()
+  } else if (['.gdoc', '.gsheet', '.gslides', '.gdraw'].includes(ext)) {
+    let url = ''
+    try { url = JSON.parse(fs.readFileSync(full, 'utf-8')).url || '' } catch { /* opaque shortcut */ }
+    md = `Google-native file — content lives in Drive.\n\n[Open in Drive](${url})`
+  } else {
+    md = `External file (${ext || 'no extension'}).\n\n**Local path:** \`${full}\``
+  }
+  const safeName = base.replace(/[<>:"/\\|?*#]/g, '').slice(0, 90)
+  const rel = `70 Imports/${srcName}/${safeName}.md`
+  const out = vaultPath(rel)
+  fs.mkdirSync(path.dirname(out), { recursive: true })
+  fs.writeFileSync(out, `---\ntype: import\nsource: "${srcName}"\noriginal: "${full.replace(/\\/g, '/')}"\nconverted: ${new Date().toISOString()}\n---\n\n# ${base}\n\n${md.slice(0, 60000)}\n`, 'utf-8')
+  return rel
+}
+
+app.post('/api/convert', async (req, res) => {
+  try {
+    const full = sourceFilePath(req.body.id)
+    if (!full || !fs.existsSync(full)) throw new Error('source file not found')
+    const srcName = req.body.id.match(/^src:([^/]+)\//)[1]
+    res.json({ ok: true, path: await convertFile(full, srcName) })
+  } catch (e) {
+    res.status(400).json({ error: String(e.message || e) })
+  }
+})
+
+app.post('/api/convert-source', async (req, res) => {
+  try {
+    const src = loadSources().find((s) => s.name === req.body.name)
+    if (!src) throw new Error('unknown source')
+    const g = buildGraph(VAULT, [src])
+    const CONVERTIBLE = ['.md', '.txt', '.docx', '.pdf', '.gdoc', '.gsheet', '.gslides']
+    const targets = g.nodes
+      .filter((n) => n.external && n.localPath && CONVERTIBLE.includes(path.extname(n.localPath).toLowerCase()))
+      .slice(0, 30) // cap per run — click again for the next batch
+    const done = [], failed = []
+    for (const t of targets) {
+      const rel = `70 Imports/${src.name}/${path.basename(t.localPath, path.extname(t.localPath)).replace(/[<>:"/\\|?*#]/g, '').slice(0, 90)}.md`
+      if (fs.existsSync(vaultPath(rel))) continue // already converted
+      try { done.push(await convertFile(t.localPath, src.name)) } catch (e) { failed.push(t.name) }
+    }
+    res.json({ ok: true, converted: done.length, failed })
+  } catch (e) {
+    res.status(400).json({ error: String(e.message || e) })
+  }
+})
+
 // Semantic layer: passive related-notes + ask-your-brain (answers via Claude Code, no API key)
 app.get('/api/related', (req, res) => {
   res.json({ ready: isReady(), related: isReady() ? related(req.query.p) : [] })

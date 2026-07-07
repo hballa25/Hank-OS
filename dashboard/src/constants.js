@@ -6,6 +6,7 @@ export const DOMAIN_COLORS = {
   '40 Life': '#ec4899',
   '50 Finance': '#22d3ee',
   '60 Health': '#a3e635',
+  '70 Imports': '#c084fc',
   '90 System': '#6b7280',
 }
 

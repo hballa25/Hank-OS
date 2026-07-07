@@ -56,6 +56,24 @@ export default function ConnectionsTab({ onGraphChanged }) {
           <span className={`dot ${s.exists ? 'connected' : 'pending'}`} />
           <b>{s.name}</b>
           <span className="muted-inline">{s.path} · up to {s.maxFiles} files{s.exists ? '' : ' · ⚠ path not found'}</span>
+          <button
+            className="primary-btn small"
+            title="Convert docs/PDFs/text in this source to vault .md notes (30 per click), landing in 70 Imports"
+            onClick={async () => {
+              setMsg(`converting ${s.name}…`)
+              const r = await (
+                await fetch('/api/convert-source', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ name: s.name }),
+                })
+              ).json()
+              setMsg(r.ok ? `✓ ${s.name}: ${r.converted} files converted to .md${r.failed?.length ? `, ${r.failed.length} failed` : ''} — click again for the next batch` : `✗ ${r.error}`)
+              if (r.ok && r.converted) onGraphChanged?.()
+            }}
+          >
+            📥 Convert to .md
+          </button>
         </div>
       ))}
       <form className="add-source" onSubmit={addSource}>
