@@ -12,6 +12,9 @@ Teacher (educator workflows are first-class) who also builds: **TaiGrader** and 
   - `90 System/` — schema, templates, prompts, briefings, agent logs
 - `dashboard/` — (Phase 2) custom React app: 3D graph + built-in Markdown editor
 
+## Skills
+- **/grill-me** (`.claude/skills/grill-me/`) — interview mode. Any time Hank brings a vague goal, brainstorm, or blank goals file, grill first, build second.
+
 ## Rules for every agent/session
 1. **Read `vault/90 System/schema.md` before creating or editing notes** — use the supertag frontmatter types defined there.
 2. New notes from captures go to `00 Inbox/` unless you're confident of the destination; filing is the Gardener's job.
