@@ -13,10 +13,14 @@ One line per note: `path — type — gist`. Maintained nightly by the Gardener.
 - `60 Health/Fitness Goals.md` — note — recomp at 280 lb: ~2,400–2,600 kcal, 200g protein, 2 meals + shake, creatine (filled via grill-me)
 - `90 System/schema.md` — system — supertag schema, all note types
 - `90 System/index.md` — system — this file
+- `90 System/automation-spine.md` — reference — The Forge: the automation spine blueprint (ruflo swarm → verified drafts → money-only approval)
 - `90 System/agents/gardener.md` — prompt — The Gardener nightly maintenance spec
 - `90 System/agents/briefing.md` — prompt — The Briefing morning note spec
 - `90 System/agents/trader.md` — prompt — The Trader daily pre-market spec (not yet scheduled)
 - `90 System/agents/chef.md` — prompt — The Chef weekly meal-prep spec (not yet scheduled)
+- `90 System/agents/forge.md` — prompt — The Forge orchestrator: runs the ruflo swarm + enforces guardrails
+- `90 System/agents/workbook-forge.md` — prompt — The Forge Workbook worker (Phase 1: idea → print-ready workbook draft)
+- `90 System/approvals/README.md` — reference — the pending-draft / money-approval feed the dashboard reads
 - `90 System/prompts/README.md` — index — catalogue of migrated prompts from both PDF guides
 - `90 System/prompts/jarvis-pack/` — prompts — 6 JARVIS prompts (galaxy, brain, voice, fly-to-source, personality, total recall)
 - `90 System/prompts/second-brain/` — prompts — 5 principles + 8 starter/goal prompts

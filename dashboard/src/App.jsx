@@ -6,6 +6,7 @@ import ClaudeTab from './components/ClaudeTab.jsx'
 import BrowserTab from './components/BrowserTab.jsx'
 import AskPanel from './components/AskPanel.jsx'
 import NotesTab from './components/NotesTab.jsx'
+import AutomationsTab from './components/AutomationsTab.jsx'
 import { saveNote } from './api.js'
 import NotePanel from './components/NotePanel.jsx'
 import FinanceTab from './components/FinanceTab.jsx'
@@ -13,7 +14,7 @@ import HealthTab from './components/HealthTab.jsx'
 import { fetchGraph } from './api.js'
 import { DOMAIN_COLORS, DOMAIN_LABELS, colorFor } from './constants.js'
 
-const TABS = ['Galaxy', 'Notes', 'Finance', 'Health', 'Connections', 'Claude', 'Browser']
+const TABS = ['Galaxy', 'Notes', 'Automations', 'Finance', 'Health', 'Connections', 'Claude', 'Browser']
 
 export default function App() {
   const [graph, setGraph] = useState(null)
@@ -188,6 +189,8 @@ export default function App() {
           />
         ) : tab === 'Notes' ? (
           <NotesTab />
+        ) : tab === 'Automations' ? (
+          <AutomationsTab />
         ) : tab === 'Finance' ? (
           <FinanceTab />
         ) : tab === 'Health' ? (

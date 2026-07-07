@@ -2,12 +2,30 @@ import express from 'express'
 import fs from 'fs'
 import path from 'path'
 import { fileURLToPath } from 'url'
+import matter from 'gray-matter'
 import { buildGraph, listByType } from './vaultParser.js'
 import { buildIndex, search, related, isReady } from './semantic.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const VAULT = path.resolve(__dirname, '..', '..', 'vault')
 const PORT = 5175
+
+// Load the LLM key the Forge needs from the single gitignored config the user
+// edits by hand (~/.vibe-trading/.env). Only the Gemini vars are pulled into this
+// process so the server and any agent/ruflo subprocess it spawns inherit them —
+// no secret is ever copied into the repo. Existing env wins.
+function loadForgeEnv() {
+  try {
+    const home = process.env.USERPROFILE || process.env.HOME
+    const raw = fs.readFileSync(path.join(home, '.vibe-trading', '.env'), 'utf-8')
+    for (const key of ['GEMINI_API_KEY', 'GEMINI_BASE_URL', 'LANGCHAIN_MODEL_NAME']) {
+      if (process.env[key]) continue
+      const m = raw.match(new RegExp('^' + key + '=(.*)$', 'm'))
+      if (m && m[1].trim() && !m[1].includes('PASTE_YOUR')) process.env[key] = m[1].trim()
+    }
+  } catch { /* config not present yet — Forge falls back to Claude-only */ }
+}
+loadForgeEnv()
 
 const app = express()
 app.use(express.json({ limit: '5mb' }))
@@ -336,6 +354,93 @@ app.get('/api/gaps', (req, res) => {
       })
   )
   res.json({ gaps, insular: insular.map((n) => ({ id: n.id, name: n.name, domain: n.domain, degree: n.degree })) })
+})
+
+// ── The Forge: automation spine (jobs + approval inbox) ──────────────────────
+// See vault/90 System/automation-spine.md. Every trigger (button/voice/schedule)
+// lands here; a job runs, writes drafts + an approval item, and the dashboard
+// surfaces it. Only 'money'-gate items wait for a human click.
+const FORGE_JOBS = [
+  { id: 'workbook', name: 'Workbook Forge', spec: '90 System/agents/workbook-forge.md', focus: 'an AI Workbooks idea/product note', status: 'active' },
+  { id: 'app-copilot', name: 'App Copilot', spec: '90 System/agents/forge.md', focus: 'a TaiGrader / XPScholar issue note', status: 'planned' },
+  { id: 'lesson', name: 'Lesson Forge', spec: '90 System/agents/generators.md', focus: 'a lesson or unit note', status: 'planned' },
+]
+const APPROVALS_DIR = path.join(VAULT, '90 System', 'approvals')
+
+app.get('/api/forge/jobs', (req, res) => res.json(FORGE_JOBS))
+
+// Forge config status — booleans + model only, never the key itself.
+app.get('/api/forge/config', (req, res) => {
+  res.json({
+    geminiReady: !!process.env.GEMINI_API_KEY,
+    model: process.env.LANGCHAIN_MODEL_NAME || null,
+  })
+})
+
+app.get('/api/approvals', (req, res) => {
+  if (!fs.existsSync(APPROVALS_DIR)) return res.json([])
+  const items = fs.readdirSync(APPROVALS_DIR)
+    .filter((f) => f.endsWith('.md') && f.toLowerCase() !== 'readme.md')
+    .map((f) => {
+      const full = path.join(APPROVALS_DIR, f)
+      let data = {}, content = ''
+      try { const p = matter(fs.readFileSync(full, 'utf-8')); data = p.data || {}; content = p.content } catch { /* skip bad frontmatter */ }
+      return {
+        id: f,
+        name: f.replace(/\.md$/, ''),
+        job: data.job || '',
+        status: data.status || 'pending',
+        gate: data.gate || 'review',
+        draft: data.draft || '',
+        cost: data.cost || '',
+        summary: content.trim().slice(0, 500),
+        mtime: fs.statSync(full).mtimeMs,
+      }
+    })
+    .sort((a, b) => b.mtime - a.mtime)
+  res.json(items)
+})
+
+app.post('/api/approvals/decision', (req, res) => {
+  try {
+    const { id, decision } = req.body
+    if (!['approve', 'reject'].includes(decision)) throw new Error('decision must be approve or reject')
+    const full = vaultPath(`90 System/approvals/${id}`)
+    if (!fs.existsSync(full)) throw new Error('approval item not found')
+    const status = decision === 'approve' ? 'approved' : 'rejected'
+    let raw = fs.readFileSync(full, 'utf-8')
+    raw = /^status:/m.test(raw)
+      ? raw.replace(/^status:.*$/m, `status: ${status}`)
+      : raw.replace(/^---\n/, `---\nstatus: ${status}\n`)
+    fs.writeFileSync(full, raw, 'utf-8')
+    res.json({ ok: true, status })
+  } catch (e) {
+    res.status(400).json({ error: String(e.message || e) })
+  }
+})
+
+// Run a Forge job. v1 launches a seeded Claude Code session (visible terminal —
+// the same trusted path as /api/launch-claude) primed with the Forge + job spec
+// and the focus note; it writes drafts + an approval item back into the vault.
+// (Next: headless ruflo swarm once presets + the Gemini bulk key are set — see
+// automation-spine.md. Kept as a visible launch, not a hidden LAN-exposed writer.)
+app.post('/api/forge/run', async (req, res) => {
+  try {
+    const { job, focus } = req.body
+    const def = FORGE_JOBS.find((j) => j.id === job)
+    if (!def) throw new Error(`unknown job: ${job}`)
+    if (def.status !== 'active') throw new Error(`${def.name} is not active yet`)
+    if (!focus) throw new Error('a focus note is required')
+    if (!fs.existsSync(vaultPath(focus))) throw new Error(`focus note not found: ${focus}`)
+    const { spawn } = await import('child_process')
+    const root = path.resolve(VAULT, '..')
+    const prompt = `You are The Forge (Hank OS). Read 'vault/90 System/agents/forge.md' and 'vault/${def.spec}', then run the '${job}' job on focus note 'vault/${focus}' and its 1-hop context. Produce DRAFTS in the vault, write an approval item to 'vault/90 System/approvals/', and obey every CLAUDE.md guardrail: never spend money without the one-button confirm, never put student-identifiable data in a cloud call.`
+    const args = ['/c', 'start', `Forge ${job}`, 'cmd', '/k', 'claude', prompt]
+    spawn('cmd', args, { cwd: root, detached: true, stdio: 'ignore' }).unref()
+    res.json({ ok: true, launched: `${def.name} → ${focus}` })
+  } catch (e) {
+    res.status(400).json({ error: String(e.message || e) })
+  }
 })
 
 // serve the built frontend when present (production mode)

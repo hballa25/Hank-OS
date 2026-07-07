@@ -192,3 +192,25 @@ main { flex: 1; position: relative; overflow: hidden; }
   .command-bar { min-width: 120px; }
   .note-panel { width: 100vw; }
 }
+
+/* Automations / The Forge */
+.automations h2 { font-size: 15px; margin: 0 0 4px; letter-spacing: 0.3px; }
+.automations section { margin-bottom: 28px; }
+.forge-controls { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; align-items: center; }
+.forge-controls select, .forge-controls input {
+  background: #0b0f17; color: #e5e7eb; border: 1px solid #22d3ee33;
+  border-radius: 8px; padding: 8px 10px; font-size: 13px;
+}
+.forge-controls input { flex: 1; min-width: 220px; }
+.forge-msg { color: #a3e635; font-size: 13px; margin: 12px 0 0; }
+.forge-brains { color: #6b7280; font-size: 12.5px; margin: 10px 0 0; }
+.approval { border: 1px solid #ffffff14; border-radius: 10px; padding: 12px 14px; margin: 10px 0; background: #ffffff06; }
+.approval.money { border-color: #f59e0b66; background: #f59e0b12; }
+.approval-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.approval-summary { white-space: pre-wrap; }
+.badge { font-size: 11px; color: #9ca3af; border: 1px solid #ffffff22; border-radius: 999px; padding: 2px 9px; white-space: nowrap; }
+.badge.money { color: #f59e0b; border-color: #f59e0b66; }
+.approval-actions { display: flex; gap: 8px; margin-top: 10px; }
+.settled { margin-top: 16px; }
+.settled summary { cursor: pointer; }
+.settled-row { font-size: 13px; color: #9ca3af; padding: 4px 0; }
