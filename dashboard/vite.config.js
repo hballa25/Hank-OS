@@ -9,6 +9,7 @@ export default defineConfig({
     dedupe: ['three'],
   },
   server: {
+    host: true, // expose on LAN so the phone can reach it over home WiFi
     port: 5173,
     proxy: {
       '/api': 'http://localhost:5175',

@@ -10,7 +10,7 @@ Teacher (educator workflows are first-class) who also builds: **TaiGrader** and 
   - `00 Inbox/` — raw captures land here; agents file them later. Never block capture on organization.
   - `10 Teaching/` `20 Hustles/` `30 Apps/` `40 Life/` `50 Finance/` `60 Health/` — domains
   - `90 System/` — schema, templates, prompts, briefings, agent logs
-- `dashboard/` — the Hank OS app: Express vault API (port 5175) + React/Vite front end (port 5173). Run with `npm run dev` in `dashboard/`, or via the `hank-os-dashboard` launch config. 3D galaxy (react-force-graph-3d — keep THREE deduped via the package.json override or the scene renders black), built-in Markdown editor, Finance + Health tabs.
+- `dashboard/` — the Hank OS app: Express vault API (port 5175) + React/Vite front end (port 5173). Run with `npm run dev` in `dashboard/`, or via the `hank-os-dashboard` launch config. 3D galaxy (react-force-graph-3d — keep THREE deduped via the package.json override or the scene renders black), built-in Markdown editor, Finance + Health tabs, 🎤 voice capture/commands (Chrome Web Speech), 🚀 Deploy context packs, 🔭 Gap Finder. PWA-installable (manifest + sw.js in `public/`; SW registers in prod builds only). Vite listens on the LAN (`host: true`) — phone on home WiFi: `http://<pc-ip>:5173`.
 
 ## Skills
 - **/grill-me** (`.claude/skills/grill-me/`) — interview mode. Any time Hank brings a vague goal, brainstorm, or blank goals file, grill first, build second.
