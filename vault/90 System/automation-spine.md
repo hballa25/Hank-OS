@@ -31,7 +31,7 @@ The reusable machine that turns any Hank OS job into a **verified draft** with a
 
 **Host:** the always-on dashboard server (`dashboard/server/index.js`, autostarted by [[autostart]]) gains a **job runner + scheduler + approval store**. Every trigger becomes a POST to `/api/forge/run`. This unifies all four run-modes through one place — nothing new to keep running.
 
-**Brains (mixed, per grill):** ruflo routes heavy reasoning to the local `claude` CLI (no per-token cost, on Hank's plan) and high-volume grunt work to **Gemini Flash** via API key (cheap bulk tier). *Requires a Gemini API key in local config — see Open questions.*
+**Brains (mixed, per grill):** ruflo routes heavy reasoning to the local `claude` CLI (no per-token cost, on Hank's plan) and high-volume grunt work to **Gemini Flash** via API key (cheap bulk tier). **Wired 2026-07-07:** ruflo installed + contained in `.forge-runtime/` (gitignored), Google/Gemini provider configured + connectivity verified, hive-mind initialized. Confirmed ruflo executes agents via the local `claude` CLI (subscription, no Anthropic API key needed). `/api/forge/run` takes an `executor`: `claude` (default, one focused session) or `swarm` (`ruflo hive-mind spawn --claude`, autonomous multi-agent) — the Automations tab has an Engine toggle. Swarm opens a **visible terminal** for now so the first autonomous runs can be watched.
 
 **Quality gates (baked in, per grill "gate everything"):** any code an agent writes goes through TDD + self-review + verification (superpowers) with karpathy discipline; any outward-facing artifact is checked by a reviewer agent before it lands. These are the *automated* gate that replaces manual approval clicks.
 

@@ -426,18 +426,33 @@ app.post('/api/approvals/decision', (req, res) => {
 // automation-spine.md. Kept as a visible launch, not a hidden LAN-exposed writer.)
 app.post('/api/forge/run', async (req, res) => {
   try {
-    const { job, focus } = req.body
+    const { job, focus, executor = 'claude' } = req.body
     const def = FORGE_JOBS.find((j) => j.id === job)
     if (!def) throw new Error(`unknown job: ${job}`)
     if (def.status !== 'active') throw new Error(`${def.name} is not active yet`)
+    if (!['claude', 'swarm'].includes(executor)) throw new Error(`unknown executor: ${executor}`)
     if (!focus) throw new Error('a focus note is required')
     if (!fs.existsSync(vaultPath(focus))) throw new Error(`focus note not found: ${focus}`)
     const { spawn } = await import('child_process')
     const root = path.resolve(VAULT, '..')
-    const prompt = `You are The Forge (Hank OS). Read 'vault/90 System/agents/forge.md' and 'vault/${def.spec}', then run the '${job}' job on focus note 'vault/${focus}' and its 1-hop context. Produce DRAFTS in the vault, write an approval item to 'vault/90 System/approvals/', and obey every CLAUDE.md guardrail: never spend money without the one-button confirm, never put student-identifiable data in a cloud call.`
-    const args = ['/c', 'start', `Forge ${job}`, 'cmd', '/k', 'claude', prompt]
-    spawn('cmd', args, { cwd: root, detached: true, stdio: 'ignore' }).unref()
-    res.json({ ok: true, launched: `${def.name} → ${focus}` })
+    // absolute paths so a swarm worker (cwd = .forge-runtime) still finds the vault
+    const objective = `You are The Forge (Hank OS). Work in the Hank OS repo at '${root}'. Read '${root}/vault/90 System/agents/forge.md' and '${root}/vault/${def.spec}', then run the '${job}' job on focus note '${root}/vault/${focus}' and its 1-hop context. Produce DRAFTS in the vault, write an approval item to '${root}/vault/90 System/approvals/', and obey every CLAUDE.md guardrail: never spend money without the one-button confirm, never put student-identifiable data in a cloud call.`
+    let args, cwd, label
+    if (executor === 'swarm') {
+      // ruflo hive-mind (autonomous multi-agent). Reasoning runs on the Claude
+      // subscription; bulk on the configured Gemini provider. Visible terminal so
+      // the first autonomous runs can be watched. Runs from the contained runtime.
+      cwd = path.join(root, '.forge-runtime')
+      if (!fs.existsSync(cwd)) throw new Error('swarm runtime not set up (.forge-runtime missing)')
+      args = ['/c', 'start', `Forge ${job} (swarm)`, 'cmd', '/k', 'ruflo', 'hive-mind', 'spawn', '--claude', '-n', '4', '-o', objective]
+      label = `${def.name} → ${focus} (ruflo swarm)`
+    } else {
+      cwd = root
+      args = ['/c', 'start', `Forge ${job}`, 'cmd', '/k', 'claude', objective]
+      label = `${def.name} → ${focus} (solo Claude)`
+    }
+    spawn('cmd', args, { cwd, detached: true, stdio: 'ignore' }).unref()
+    res.json({ ok: true, launched: label })
   } catch (e) {
     res.status(400).json({ error: String(e.message || e) })
   }

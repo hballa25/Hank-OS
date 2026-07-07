@@ -11,3 +11,7 @@ Desktop.ini
 
 # semantic index cache
 dashboard/.semantic-cache.json
+.forge-runtime/
+.claude-flow/
+.claude/proven-config.json
+.claude/.proven-config-version

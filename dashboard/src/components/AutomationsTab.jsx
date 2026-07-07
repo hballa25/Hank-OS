@@ -14,6 +14,7 @@ export default function AutomationsTab() {
   const [msg, setMsg] = useState(null)
   const [busy, setBusy] = useState(false)
   const [cfg, setCfg] = useState(null)
+  const [executor, setExecutor] = useState('claude')
 
   const loadApprovals = useCallback(() => {
     fetch('/api/approvals').then((r) => r.json()).then(setApprovals).catch(() => {})
@@ -48,7 +49,7 @@ export default function AutomationsTab() {
         await fetch('/api/forge/run', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ job, focus }),
+          body: JSON.stringify({ job, focus, executor }),
         })
       ).json()
       setMsg(r.error ? `⚠ ${r.error}` : `🔨 ${r.launched} — a Forge session opened. Its draft appears below when done.`)
@@ -104,6 +105,20 @@ export default function AutomationsTab() {
           <button className="tab active" onClick={run} disabled={busy || activeJob?.status !== 'active'}>
             {busy ? 'Launching…' : 'Run'}
           </button>
+        </div>
+        <div className="forge-executor">
+          <span className="muted">Engine:</span>
+          <button className={executor === 'claude' ? 'tab active' : 'tab'} onClick={() => setExecutor('claude')}>
+            Solo Claude
+          </button>
+          <button className={executor === 'swarm' ? 'tab active' : 'tab'} onClick={() => setExecutor('swarm')}>
+            Swarm (ruflo)
+          </button>
+          <span className="muted">
+            {executor === 'swarm'
+              ? 'Autonomous multi-agent hive — opens a visible terminal to watch the first runs.'
+              : 'One focused Claude session. Reliable default.'}
+          </span>
         </div>
         {msg && <p className="forge-msg">{msg}</p>}
         {cfg && (
