@@ -79,6 +79,23 @@ app.get('/api/notes-by-type', (req, res) => {
   res.json(listByType(VAULT, req.query.type))
 })
 
+// Host info — powers the "Connect your phone" helper with the live LAN address
+app.get('/api/host-info', async (req, res) => {
+  const os = await import('os')
+  const ifaces = os.networkInterfaces()
+  const lan = []
+  let tailscale = null
+  for (const addrs of Object.values(ifaces)) {
+    for (const a of addrs || []) {
+      if (a.family === 'IPv4' && !a.internal) {
+        if (a.address.startsWith('100.')) tailscale = a.address
+        else lan.push(a.address)
+      }
+    }
+  }
+  res.json({ lan, tailscale, port: 5173 })
+})
+
 // Notes tab: full vault tree
 app.get('/api/tree', (req, res) => {
   const out = []

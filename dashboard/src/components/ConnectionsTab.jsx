@@ -15,8 +15,12 @@ export default function ConnectionsTab({ onGraphChanged }) {
   const [form, setForm] = useState({ name: '', path: '' })
   const [msg, setMsg] = useState('')
 
+  const [host, setHost] = useState(null)
   const loadSources = () => fetch('/api/sources').then((r) => r.json()).then(setSources)
-  useEffect(() => { loadSources() }, [])
+  useEffect(() => {
+    loadSources()
+    fetch('/api/host-info').then((r) => r.json()).then(setHost).catch(() => {})
+  }, [])
 
   const addSource = async (e) => {
     e.preventDefault()
@@ -49,6 +53,19 @@ export default function ConnectionsTab({ onGraphChanged }) {
           <span className="muted-inline">{a.note}</span>
         </div>
       ))}
+
+      <h3 className="sect">📱 Connect your phone</h3>
+      {host && (
+        <div className="phone-connect">
+          <p><b>At home (same WiFi) — works now:</b> on your phone's browser open{' '}
+            {host.lan[0] ? <code>http://{host.lan[0]}:{host.port}</code> : '(no LAN address found)'}
+            {' '}→ browser menu → <b>Add to Home Screen</b>. Full app, notes and all.</p>
+          <p><b>From anywhere (cloud sync):</b> install <a href="https://tailscale.com/download" target="_blank" rel="noreferrer">Tailscale</a> (free) on this PC <i>and</i> your phone, sign into both with the same account, then open{' '}
+            {host.tailscale ? <code>http://{host.tailscale}:{host.port}</code> : <>the PC's Tailscale address <code>http://100.x.x.x:{host.port}</code> (shown in Tailscale once installed)</>}
+            {' '}from your phone anywhere. Encrypted, no setup on the router. The PC just needs to be on.</p>
+          <p className="muted-inline">Notes you make on your phone save straight to the vault on this PC and push to GitHub — so they're backed up in the cloud even when the PC sleeps.</p>
+        </div>
+      )}
 
       <h3 className="sect">Sources — folders in the Galaxy</h3>
       {sources.map((s, i) => (

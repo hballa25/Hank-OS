@@ -10,6 +10,7 @@ export default defineConfig({
   },
   server: {
     host: true, // expose on LAN so the phone can reach it over home WiFi
+    allowedHosts: ['.ts.net', '.local'], // let Tailscale MagicDNS / mDNS hostnames through
     port: 5173,
     proxy: {
       '/api': 'http://localhost:5175',
