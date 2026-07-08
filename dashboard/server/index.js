@@ -437,24 +437,29 @@ app.post('/api/forge/run', async (req, res) => {
     const root = path.resolve(VAULT, '..')
     // absolute paths so a swarm worker (cwd = .forge-runtime) still finds the vault
     const objective = `You are The Forge (Hank OS). Work in the Hank OS repo at '${root}'. Read '${root}/vault/90 System/agents/forge.md' and '${root}/vault/${def.spec}', then run the '${job}' job on focus note '${root}/vault/${focus}' and its 1-hop context. Produce DRAFTS in the vault, write an approval item to '${root}/vault/90 System/approvals/', and obey every CLAUDE.md guardrail: never spend money without the one-button confirm, never put student-identifiable data in a cloud call.`
-    let args, cwd, label
+    let child, label
     if (executor === 'swarm') {
       // ruflo hive-mind (autonomous multi-agent). Reasoning runs on the Claude
       // subscription; bulk on the configured Gemini provider. Visible terminal so
       // the first autonomous runs can be watched. Runs from the contained runtime.
-      cwd = path.join(root, '.forge-runtime')
+      const cwd = path.join(root, '.forge-runtime')
       if (!fs.existsSync(cwd)) throw new Error('swarm runtime not set up (.forge-runtime missing)')
-      args = ['/c', 'start', `Forge ${job} (swarm)`, 'cmd', '/k', 'ruflo', 'hive-mind', 'spawn', '--claude', '-n', '4', '-o', objective]
+      const args = ['/c', 'start', `Forge ${job} (swarm)`, 'cmd', '/k', 'ruflo', 'hive-mind', 'spawn', '--claude', '-n', '4', '-o', objective]
+      child = spawn('cmd', args, { cwd, detached: true, stdio: 'ignore' })
       label = `${def.name} → ${focus} (ruflo swarm)`
     } else {
-      // hands-off: auto-approve the (reversible) file writes so the run doesn't
-      // stall on prompts. Guardrails live in the objective/CLAUDE.md; only money
-      // needs Hank's click, and that's enforced in the approval feed, not here.
-      cwd = root
-      args = ['/c', 'start', `Forge ${job}`, 'cmd', '/k', 'claude', '--dangerously-skip-permissions', objective]
-      label = `${def.name} → ${focus} (solo Claude)`
+      // hands-off HEADLESS: `claude -p` runs the objective to completion and exits,
+      // writing drafts + the approval item — no TUI to babysit (interactive launches
+      // stall on the prompt-submit / skip-permissions acceptance). Mirrors the proven
+      // /api/ask pattern: shell:true so PATH resolves claude, and the objective goes
+      // via STDIN to dodge Windows argv mangling. Fire-and-forget; the dashboard
+      // surfaces the result via the approval feed. Reversible writes auto-approved.
+      child = spawn('claude', ['-p', '--dangerously-skip-permissions'], { cwd: root, shell: true, stdio: ['pipe', 'ignore', 'ignore'] })
+      child.stdin.write(objective)
+      child.stdin.end()
+      label = `${def.name} → ${focus} (solo Claude, headless)`
     }
-    spawn('cmd', args, { cwd, detached: true, stdio: 'ignore' }).unref()
+    child.unref()
     res.json({ ok: true, launched: label })
   } catch (e) {
     res.status(400).json({ error: String(e.message || e) })
