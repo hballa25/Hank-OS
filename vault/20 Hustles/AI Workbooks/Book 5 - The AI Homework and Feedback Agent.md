@@ -2,7 +2,7 @@
 type: product
 hustle: "[[AI Workbooks]]"
 status: building
-assets: ["[[Book 5 — Workbook Draft v1]]", "[[Book 5 — Listing Pack]]", "[[Book 5 — Thumbnail Brief]]"]
+assets: ["[[Book 5 — Workbook v1 (PDF)]]", "[[Book 5 — Workbook Draft v1]]", "[[Book 5 — Listing Pack]]", "[[Book 5 — Thumbnail Brief]]"]
 listing: 
 ---
 
@@ -71,5 +71,12 @@ Teachers who've outgrown consumer AI-for-teacher tools (e.g. Brisk, MagicSchool)
 - Publishing/listing is auto-allowed after the quality gate (no money gate); **paid ads/promotion would require the one-button money confirm.**
 
 Approval/notification: `90 System/approvals/2026-07-07-2100 workbook book-5.md` (gate: review).
+
+---
+
+## 🏗️ Build-out — 2026-07-08
+- **Title locked:** "Beyond Brisk & MagicSchool — Build a Custom AI Homework & Feedback Agent" (Option C, ownership angle).
+- **Print-ready PDF built:** [[Book 5 — Workbook v1 (PDF)]] — 17 pages, designed layout (full-bleed navy cover, teal copy-paste prompt cards, fill-in blanks, red safety page). Ready to upload.
+- **Still open before publish:** final price (Forge rec: $6.50 launch → $8–9), and the Canva editable version. Featured tool left ChatGPT/Claude-neutral.
 
 Related: [[AI Workbooks]] · [[The Forge — Workbook]] · [[Book 3 - The Build-an-Agent Workbook]] · [[TaiGrader]] · [[XPScholar]]
