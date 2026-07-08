@@ -8,8 +8,14 @@ schedule: on-demand (job=workbook)
 
 The Phase-1 instance of [[The Forge]]. Turns an [[AI Workbooks]] `idea` or `product` note into a **print-ready, sellable draft** — with zero clicks unless money is involved. Read `90 System/schema.md`, `90 System/index.md`, and the existing [[AI Workbooks]] hub (for voice/format consistency — Books 1–4 + Planner Kit in Canva) before starting.
 
+## Content is decided grill-first (two phases)
+Per Hank (2026-07-07): **grill before forge.** A vague seed note yields a generic book, so content is determined in two phases:
+
+- **Phase 0 — Grill (interactive, in the session/dashboard, NOT the autonomous swarm).** Before any generation, run a [[grill-me]]-style interview: grade/age, standard or skill, exact topic, page count, what makes THIS workbook different, who buys it, price point, which existing [[AI Workbooks]] Book/voice it extends. Write the answers into a rich `idea`/`product` seed note. This is the real content-determination step — the swarm's quality is capped by this note.
+- **Phase 1 — Forge (autonomous swarm).** The swarm below generates strictly from that enriched seed note + its 1-hop links. Because a hands-off hive can't pause to interview, all human input must already live in the note.
+
 ## Input
-A focus note of `type: idea` (domain: product) or `type: product` (status: idea | building). The Forge passes it in.
+A **grilled, detailed** focus note of `type: idea` (domain: product) or `type: product` (status: idea | building). If the note is thin, do Phase 0 first — never forge from a one-liner.
 
 ## Swarm shape (`.ruflo/presets/workbook.yaml`)
 Parallel workers, mixed brains:
